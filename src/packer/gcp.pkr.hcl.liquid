@@ -1,0 +1,22 @@
+source "googlecompute" "archetype" {
+    project_id   = "{{ gcp_proj_id }}"
+    image_name   = "{{ org_name }}-archetype-${ formatdate("YYYY-MM-DD", timestamp()) }"
+    source_image = "{{ source_image }}"
+    ssh_username = "packer"
+    zone         = "us-central1-a"
+    machine_type = "e2-medium"
+}
+
+build {
+    sources = ["source.googlecompute.archetype"]
+
+    provisioner "ansible" {
+        playbook_file = "./archetype.yml"
+        user          = "packer"
+        pause_before  = "30s"
+    }
+
+    post-processor "manifest" {
+        output = "packer-manifest.json"
+    }
+}

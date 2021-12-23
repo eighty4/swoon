@@ -1,8 +1,9 @@
 use dialoguer::Input;
 
 use crate::api::{swoon_error_result, SwoonError};
-use crate::api::config::{ConfigModel, write_config};
+use crate::api::config::{SwoonConfig, write_config};
 use crate::api::context::SwoonContext;
+use crate::gcloud::cli::DEFAULT_OS;
 
 pub struct InitOpts<'a> {
     pub template_name: Option<&'a str>,
@@ -17,8 +18,11 @@ pub fn init_swoon_project(ctx: &SwoonContext, opts: &InitOpts) -> Result<(), Swo
         .with_prompt("What is your organization name?")
         .interact_text()?;
 
-    write_config(opts.template_name, &ConfigModel {
+    let default_os = DEFAULT_OS;
+
+    write_config(opts.template_name, &SwoonConfig {
         org_name,
+        default_os,
     })?;
     return Result::Ok(());
 }

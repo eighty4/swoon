@@ -3,6 +3,7 @@ use std::fmt;
 
 pub mod context;
 pub mod config;
+pub mod template;
 
 pub fn swoon_error_result<T>(msg: &str) -> Result<T, SwoonError> {
     return Result::Err(SwoonError { msg: String::from(msg) });

@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use console::Term;
 use which::which;
 
+use crate::api::config::{read_config, SwoonConfig};
 use crate::api::SwoonError;
 
 #[derive(PartialEq, Eq, Hash)]
@@ -18,6 +19,7 @@ pub trait BinaryPaths {
 
 pub struct SwoonContext {
     pub binaries: HashMap<Binary, PathBuf>,
+    pub config: Option<SwoonConfig>,
     pub config_path: Option<PathBuf>,
     pub terminal: Term,
 }
@@ -44,11 +46,15 @@ pub fn init_swoon_context() -> std::result::Result<SwoonContext, SwoonError> {
     // todo handle error
     let config_path_buf = std::env::current_dir().unwrap().join("swoon.yml");
     let mut config_path = None;
+    let mut config = None;
     if config_path_buf.exists() {
+        config = read_config(config_path_buf.to_str().unwrap());
         config_path = Some(config_path_buf);
     }
+
     return std::result::Result::Ok(SwoonContext {
         binaries,
+        config,
         config_path,
         terminal: Term::stdout(),
     });

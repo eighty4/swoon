@@ -7,9 +7,12 @@ use crate::api::context::{init_swoon_context, SwoonContext};
 use crate::bake::{bake_machine_images, BakeOpts};
 use crate::init::{init_swoon_project, InitOpts};
 
+mod ansible;
 mod api;
 mod bake;
+mod gcloud;
 mod init;
+mod packer;
 
 fn main() {
     let c: SwoonContext = init_swoon_context().expect("failed to initialize");

@@ -1,0 +1,27 @@
+---
+
+- name: Provision your machine image archetype
+  hosts: all
+  become: true
+  tasks:
+
+    - name: Upgrade OS packages
+      apt:
+        upgrade: dist
+        update_cache: yes
+
+    - name: Install firewall
+      import_role:
+        name: firewall
+      vars:
+        ssh_port: '22'
+
+    - name: Install Vim
+      package:
+        name: vim
+        state: latest
+
+    - name: Install cURL
+      package:
+        name: curl
+        state: latest
