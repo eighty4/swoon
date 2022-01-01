@@ -1,75 +1,54 @@
 use std::fs;
 use std::io::Write;
-use std::process::exit;
 
 use yaml_rust::YamlLoader;
 
-use crate::api::SwoonError;
+use crate::api::{CloudPlatform, DEFAULT_OS, OperatingSystem, task};
 use crate::api::template::{Template, template_object};
-use crate::gcloud::cli::{DEFAULT_OS, GcpImageFamily};
-
-const DEFAULT_TEMPLATE_NAME: &str = "minimal";
 
 pub struct SwoonConfig {
     pub org_name: String,
-    pub default_os: GcpImageFamily,
+    pub default_os: OperatingSystem,
+    pub default_platform: CloudPlatform,
 }
 
-fn cfg_tmpl_by_name(tmpl_name: &str) -> String {
-    let cfg_tmpl_bytes;
-    match tmpl_name {
-        "full" => cfg_tmpl_bytes = include_bytes!("swoon.full.yml.liquid"),
-        "minimal" | &_ => cfg_tmpl_bytes = include_bytes!("swoon.minimal.yml.liquid"),
-    }
-    return String::from_utf8_lossy(cfg_tmpl_bytes).to_string();
-}
-
-pub fn write_config(tmpl_name: Option<&str>, cfg: &SwoonConfig) -> Result<(), SwoonError> {
-    let tmpl_name = tmpl_name.unwrap_or(DEFAULT_TEMPLATE_NAME);
-    let tmpl = Template::new(cfg_tmpl_by_name(tmpl_name).as_ref())?;
+pub fn write_config(tmpl_name: Option<&str>, cfg: &SwoonConfig) -> task::Result<()> {
+    let tmpl = Template::new(include_bytes!("swoon.yml.liquid"))?;
     let cfg_content: String = tmpl.render(&template_object!({
         "org_name": cfg.org_name,
+        "default_os": cfg.default_os.to_string(),
+        "default_platform": cfg.default_platform.to_str(),
     }))?;
-    println!("Creating a {} swoon config for {}", tmpl_name, cfg.org_name);
+    println!("Writing a {} swoon config for {}", tmpl_name.unwrap_or("default"), cfg.org_name);
     let mut file = fs::File::create("swoon.yml")?;
     file.write_all(cfg_content.as_bytes())?;
-    return Result::Ok(());
+    task::SUCCESS
 }
 
-pub fn read_config(config_path: &str) -> Option<SwoonConfig> {
-    let config_read = fs::read_to_string(config_path);
-    if config_read.is_err() {
-        return None;
-    }
-    return parse_config(config_read.unwrap().as_ref());
+pub fn read_config(config_path: &str) -> task::Result<SwoonConfig> {
+    let config_read = fs::read_to_string(config_path)?;
+    parse_config(config_read.as_ref())
 }
 
-fn parse_config(config: &str) -> Option<SwoonConfig> {
+fn parse_config(config: &str) -> task::Result<SwoonConfig> {
     let yaml_read = YamlLoader::load_from_str(config);
-    if yaml_read.is_err() {
-        return None;
+    if let Err(e) = yaml_read {
+        return task::Error::result(e.to_string().as_ref());
     }
-    let docs = yaml_read.unwrap();
-    let doc = &docs[0];
-    let org_name = doc["org_name"].as_str().unwrap().to_string();
-    let default_os_str = doc["default_os"].as_str();
-    let parsed_default_os = parse_default_os(default_os_str);
-    if parsed_default_os.is_err() {
-        println!("unable to parse {} as an os specifier", default_os_str.unwrap());
-        exit(1);
-    }
-    let default_os = parsed_default_os.unwrap();
-    return Some(SwoonConfig {
+    let yaml_docs = yaml_read.unwrap();
+    let doc = &yaml_docs[0];
+    let org_name = doc["org_name"].as_str()
+        .expect("org_name is a required swoon.yml field").to_string();
+    let default_platform = CloudPlatform::GCP;
+    let default_os = match doc["default_os"].as_str() {
+        None => DEFAULT_OS,
+        Some(s) => OperatingSystem::from_string(s)?,
+    };
+    Ok(SwoonConfig {
         org_name,
         default_os,
-    });
-}
-
-fn parse_default_os(so: Option<&str>) -> Result<GcpImageFamily, SwoonError> {
-    match so {
-        None => Result::Ok(DEFAULT_OS),
-        Some(s) => GcpImageFamily::from_string(s),
-    }
+        default_platform,
+    })
 }
 
 #[cfg(test)]
@@ -77,8 +56,23 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_config() {
+    fn test_parse_minimal_config() {
         let config = parse_config("---\norg_name: eighty4").unwrap();
         assert_eq!(config.org_name, "eighty4");
+        assert_eq!(config.default_platform, CloudPlatform::GCP);
+        assert_eq!(config.default_os, DEFAULT_OS);
+    }
+
+    #[test]
+    fn test_parse_full_config() {
+        let config_str = r"---
+        org_name: eighty4
+        default_os: debian:9
+        default_platform: aws
+        ";
+        let config = parse_config(config_str).unwrap();
+        assert_eq!(config.org_name, "eighty4");
+        assert_eq!(config.default_platform, CloudPlatform::GCP);
+        assert_eq!(config.default_os, OperatingSystem::Debian { version: 9 });
     }
 }

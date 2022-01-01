@@ -1,27 +1,28 @@
-use crate::{ansible, gcloud, packer};
-use crate::api::{swoon_error_result, SwoonError};
+use crate::api::command;
+use crate::api::command::Name::Init;
 use crate::api::context::SwoonContext;
+use crate::gcloud;
 
 pub struct BakeOpts {
     pub approve_plan: bool,
 }
 
-pub fn bake_machine_images(ctx: &SwoonContext, opts: &BakeOpts) -> Result<(), SwoonError> {
+pub fn bake_machine_images(ctx: &SwoonContext, opts: &BakeOpts) -> command::Result {
     if ctx.config_path == None {
-        return swoon_error_result("swoon.yml already exists in the current dir");
+        return command::Error::with_command_suggestions(
+            "There's no swoon.yml file in your current directory",
+            vec!(Init),
+        );
     }
 
     let image_names = gcloud::cli::all_image_names(&ctx).unwrap();
     if image_names.is_empty() {
-        println!("bake archetype machine image");
+        println!("Bake archetype machine image - no existing archetype image");
     } else {
-        println!("maybe bake archetype machine image if existing archetype expired");
+        println!("{}", format!("Maybe bake archetype machine image - existing images: {}", image_names.join(",")));
     }
 
     if opts.approve_plan {} else {}
 
-    packer::write_gcp_archetype_config(ctx)?;
-    ansible::write_archetype_playbook()?;
-
-    return Result::Ok(());
+    command::SUCCESS
 }

@@ -2,8 +2,8 @@ use std::process::exit;
 
 use clap::{App, Arg, ArgMatches, SubCommand};
 
-use crate::api::{swoon_error_result, SwoonError};
-use crate::api::context::{init_swoon_context, SwoonContext};
+use crate::api::command;
+use crate::api::context::SwoonContext;
 use crate::bake::{bake_machine_images, BakeOpts};
 use crate::init::{init_swoon_project, InitOpts};
 
@@ -15,7 +15,7 @@ mod init;
 mod packer;
 
 fn main() {
-    let c: SwoonContext = init_swoon_context().expect("failed to initialize");
+    let c: SwoonContext = SwoonContext::init().expect("failed to initialize");
 
     let a: ArgMatches = App::new("Swoon CLI")
         .version("0.0.1")
@@ -40,21 +40,29 @@ fn main() {
         )
         .get_matches();
 
-    let r: Result<(), SwoonError> = exec_cmd(&c, &a);
+    let r: command::Result = exec_cmd(&c, &a);
     if let Some(err) = r.err() {
-        c.terminal.write_line(&*err.to_string()).unwrap();
-        if a.subcommand_name() != None { exit(1) }
+        let error_msg = &err.cause.to_string();
+        if err.alt_commands.len() > 0 {
+            c.terminal.write_line(format!("{}. Try these commands:", error_msg).as_str()).unwrap();
+            for alt_command in err.alt_commands {
+                c.terminal.write_line(format!("    swoon {0}\n    swoon help {0}", alt_command).as_str()).unwrap();
+            }
+        } else {
+            c.terminal.write_line(error_msg).unwrap();
+        }
+        exit(1);
     }
 }
 
-fn exec_cmd(c: &SwoonContext, a: &ArgMatches) -> Result<(), SwoonError> {
-    match a.subcommand() {
-        ("init", Some(init_match)) => init_swoon_project(&c, &InitOpts {
+fn exec_cmd(ctx: &SwoonContext, args: &ArgMatches) -> command::Result {
+    match args.subcommand() {
+        ("init", Some(init_match)) => init_swoon_project(&ctx, &InitOpts {
             template_name: init_match.value_of("template"),
         }),
-        ("bake", Some(bake_match)) => bake_machine_images(&c, &BakeOpts {
+        ("bake", Some(bake_match)) => bake_machine_images(&ctx, &BakeOpts {
             approve_plan: bake_match.is_present("approve-plan"),
         }),
-        _ => swoon_error_result("No subcommand given.\nTry `swoon init`."),
+        _ => command::SUCCESS,
     }
 }
