@@ -53,7 +53,7 @@ mod tests {
 
     #[test]
     fn test_all_image_names() {
-        let ctx = SwoonContext::init().unwrap().with_config(SwoonConfig {
+        let ctx = SwoonContext::default().unwrap().with_config(SwoonConfig {
             org_name: "eighty4".to_string(),
             default_os: DEFAULT_OS,
             default_platform: CloudPlatform::GCP,
@@ -64,14 +64,14 @@ mod tests {
 
     #[test]
     fn test_default_project_id() {
-        let ctx = SwoonContext::init().unwrap();
+        let ctx = SwoonContext::default().unwrap();
         let project_id = default_project_id(&ctx).unwrap();
         assert_eq!("example-project-id", project_id);
     }
 
     #[test]
     fn test_image_name_by_os() {
-        let ctx = SwoonContext::init().unwrap();
+        let ctx = SwoonContext::default().unwrap();
         let os = OperatingSystem::Debian { version: 11 };
         let image_name = image_name_by_os(&ctx, os).unwrap();
         assert_eq!("debian-11-bullseye-v20211209", image_name);

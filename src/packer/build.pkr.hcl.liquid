@@ -1,0 +1,13 @@
+build {
+    sources = ["{{ source_name }}"]
+
+    provisioner "ansible" {
+        playbook_file = "{{ image_name }}.yml"
+        user          = "packer"
+        pause_before  = "30s"
+    }
+
+    post-processor "manifest" {
+        output = "packer-manifest.json"
+    }
+}

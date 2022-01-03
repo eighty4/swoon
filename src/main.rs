@@ -15,10 +15,9 @@ mod init;
 mod packer;
 
 fn main() {
-    let c: SwoonContext = SwoonContext::init().expect("failed to initialize");
 
     let a: ArgMatches = App::new("Swoon CLI")
-        .version("0.0.1")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Adam McKee <adam.be.g84d@gmail.com>")
         .about("The cloud for you, not for the enterprise.")
         .subcommand(SubCommand::with_name("init")
@@ -38,7 +37,14 @@ fn main() {
                 .help("Approve machine image plan")
                 .takes_value(false))
         )
+        .arg(Arg::with_name("debug")
+            .short("d")
+            .long("debug")
+            .help("Print extra debugging info")
+            .takes_value(false))
         .get_matches();
+
+    let c: SwoonContext = SwoonContext::init_from_args(&a).expect("failed to initialize");
 
     let r: command::Result = exec_cmd(&c, &a);
     if let Some(err) = r.err() {

@@ -1,3 +1,4 @@
+use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -11,7 +12,15 @@ impl Process {
         where
             I: IntoIterator<Item=S>,
             S: AsRef<OsStr>, {
+        Self::invoke_from_dir(env::current_dir()?, cmd, args)
+    }
+
+    pub fn invoke_from_dir<I, S>(invoke_dir: PathBuf, cmd: &PathBuf, args: I) -> task::Result<String>
+        where
+            I: IntoIterator<Item=S>,
+            S: AsRef<OsStr>, {
         let output = Command::new(cmd)
+            .current_dir(invoke_dir)
             .args(args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())

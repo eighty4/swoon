@@ -243,9 +243,9 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 
 [[package]]
 name = "liquid"
-version = "0.23.0"
+version = "0.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d7b354744435fa481a73167dc69afe4af3ecd8056607ef05996c83b85003f83"
+checksum = "26e930310cf4334c4936ae18737500a57739c69442b5c42bae114d619af54b82"
 dependencies = [
  "doc-comment",
  "kstring",
@@ -560,7 +560,7 @@ checksum = "8ea5119cdb4c55b55d432abb513a0429384878c15dde60cc77b1c99de1a95a6a"
 
 [[package]]
 name = "swoon"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "clap",
  "console",

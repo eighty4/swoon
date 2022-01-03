@@ -4,8 +4,9 @@ use crate::{ansible, packer};
 use crate::api::{CloudPlatform, command, DEFAULT_OS, OperatingSystem, task};
 use crate::api::CloudPlatform::*;
 use crate::api::command::Name::Bake;
-use crate::api::config::{SwoonConfig, write_config};
+use crate::api::config::SwoonConfig;
 use crate::api::context::SwoonContext;
+use crate::api::util::DataDir;
 
 pub struct InitOpts<'a> {
     pub template_name: Option<&'a str>,
@@ -18,10 +19,11 @@ pub fn init_swoon_project(ctx: &SwoonContext, opts: &InitOpts) -> command::Resul
             vec!(Bake),
         );
     }
+    DataDir::init()?;
+
     let config = prompt_for_config()?;
-    write_config(opts.template_name, &config)?;
-    let ctx_with_cfg = ctx.with_config(config);
-    write_gcp_archetype_baking_config(&ctx_with_cfg)?;
+    config.write(opts.template_name)?;
+    write_gcp_archetype_baking_config(&ctx.with_config(config))?;
     command::SUCCESS
 }
 
@@ -77,7 +79,7 @@ fn prompt_for_default_os(org_name: &String) -> task::Result<OperatingSystem> {
 }
 
 fn write_gcp_archetype_baking_config(ctx: &SwoonContext) -> task::Result<()> {
-    packer::write_gcp_archetype_config(ctx)?;
+    packer::config::write_gcp_archetype_config(ctx, DataDir::path())?;
     ansible::write_archetype_playbook()?;
     task::SUCCESS
 }

@@ -1,25 +1,24 @@
 use std::fs;
-use std::io::Write;
+use std::path::PathBuf;
 
-use crate::{gcloud, SwoonContext};
-use crate::api::{DEFAULT_OS, task};
-use crate::api::template::{Template, template_object};
+use crate::api::context::{BinaryPaths, SwoonContext};
+use crate::api::process::Process;
+use crate::api::task;
+use crate::api::util::DataDir;
+use crate::packer::config::write_gcp_archetype_config;
 
-pub fn write_gcp_archetype_config(ctx: &SwoonContext) -> task::Result<()> {
-    let template = Template::new(include_bytes!("gcp.pkr.hcl.liquid"))?;
+pub mod config;
+
+pub fn bake_archetype_image(ctx: &SwoonContext) -> task::Result<()> {
     let org_name = match &ctx.config {
         Some(cfg) => &cfg.org_name,
         None => return task::Error::result("no config"),
     };
-    let gcp_proj_id = gcloud::cli::default_project_id(ctx)?;
-    let source_image = gcloud::cli::image_name_by_os(ctx, DEFAULT_OS)?;
-    let foo = template.render(&template_object!({
-        "gcp_proj_id": gcp_proj_id,
-        "org_name": org_name,
-        "source_image": source_image,
-    }))?;
-    fs::create_dir_all("./.swoon")?;
-    let mut file = fs::File::create("./.swoon/archetype.pkr.hcl")?;
-    file.write_all(foo.as_bytes())?;
+    let image_name = "archetype";
+    let dest_dir = DataDir::create_sub_dir(
+        format!("images/{}/{}", org_name, image_name).as_str())?;
+    fs::copy("./archetype.yml", dest_dir.join("archetype.yml"))?;
+    write_gcp_archetype_config(ctx, PathBuf::from(&dest_dir))?;
+    Process::invoke_from_dir(dest_dir, ctx.gcloud_bin_path(), ["build"])?;
     task::SUCCESS
 }
