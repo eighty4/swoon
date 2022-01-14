@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::api::context::{BinaryPaths, SwoonContext};
+use crate::api::context::{PathLookup, SwoonContext};
 use crate::api::process::Process;
 use crate::api::task;
 use crate::api::util::DataDir;
@@ -19,6 +19,6 @@ pub fn bake_archetype_image(ctx: &SwoonContext) -> task::Result<()> {
         format!("images/{}/{}", org_name, image_name).as_str())?;
     fs::copy("./archetype.yml", dest_dir.join("archetype.yml"))?;
     write_gcp_archetype_config(ctx, PathBuf::from(&dest_dir))?;
-    Process::invoke_from_dir(dest_dir, ctx.gcloud_bin_path(), ["build"])?;
+    Process::invoke_from_dir(dest_dir, &ctx.gcloud_path(), ["build"])?;
     task::SUCCESS
 }

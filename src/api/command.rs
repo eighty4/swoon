@@ -28,6 +28,10 @@ pub struct Error {
 }
 
 impl Error {
+    pub fn result(error_str: &str) -> Result {
+        Result::Err(Error { cause: task::Error::new(error_str), alt_commands: vec!() })
+    }
+
     pub fn with_command_suggestions(error_str: &str, alt_commands: Vec<Name>) -> Result {
         Result::Err(Error { cause: task::Error::new(error_str), alt_commands })
     }

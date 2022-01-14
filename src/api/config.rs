@@ -1,10 +1,12 @@
 use std::fs;
 use std::io::Write;
+use std::path::{Path, PathBuf};
 
 use yaml_rust::YamlLoader;
 
 use crate::api::{CloudPlatform, DEFAULT_OS, OperatingSystem, task};
 use crate::api::template::{Template, template_object};
+use crate::api::util::error_exit;
 
 pub struct SwoonConfig {
     pub org_name: String,
@@ -13,7 +15,24 @@ pub struct SwoonConfig {
 }
 
 impl SwoonConfig {
-    pub fn parse(config: &str) -> task::Result<SwoonConfig> {
+    pub fn config_file_path() -> PathBuf {
+        match std::env::current_dir() {
+            Ok(cwd) => cwd.join("swoon.yml"),
+            Err(e) => error_exit(&e),
+        }
+    }
+
+    pub fn read_from_current_dir() -> task::Result<Option<SwoonConfig>> {
+        let config_path = Self::config_file_path();
+        let config = if config_path.exists() && config_path.is_file() {
+            Some(Self::read(config_path)?)
+        } else {
+            None
+        };
+        Ok(config)
+    }
+
+    fn parse(config: &str) -> task::Result<SwoonConfig> {
         let yaml_read = YamlLoader::load_from_str(config);
         if let Err(e) = yaml_read {
             return task::Error::result(e.to_string().as_ref());
@@ -34,7 +53,7 @@ impl SwoonConfig {
         })
     }
 
-    pub fn read(config_path: &str) -> task::Result<SwoonConfig> {
+    pub fn read<P: AsRef<Path>>(config_path: P) -> task::Result<SwoonConfig> {
         let config_read = fs::read_to_string(config_path)?;
         Self::parse(config_read.as_ref())
     }

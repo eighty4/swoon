@@ -10,12 +10,12 @@ use crate::init::{init_swoon_project, InitOpts};
 mod ansible;
 mod api;
 mod bake;
-mod gcloud;
+mod images;
 mod init;
 mod packer;
+mod platforms;
 
 fn main() {
-
     let a: ArgMatches = App::new("Swoon CLI")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Adam McKee <adam.be.g84d@gmail.com>")
@@ -50,12 +50,12 @@ fn main() {
     if let Some(err) = r.err() {
         let error_msg = &err.cause.to_string();
         if err.alt_commands.len() > 0 {
-            c.terminal.write_line(format!("{}. Try these commands:", error_msg).as_str()).unwrap();
+            c.write_line(format!("{}. Try these commands:", error_msg).as_str());
             for alt_command in err.alt_commands {
-                c.terminal.write_line(format!("    swoon {0}\n    swoon help {0}", alt_command).as_str()).unwrap();
+                c.write_line(format!("    swoon {0}\n    swoon help {0}", alt_command).as_str());
             }
         } else {
-            c.terminal.write_line(error_msg).unwrap();
+            c.write_line(error_msg);
         }
         exit(1);
     }

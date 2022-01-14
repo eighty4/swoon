@@ -19,19 +19,31 @@ impl Process {
         where
             I: IntoIterator<Item=S>,
             S: AsRef<OsStr>, {
+        let mut debug_print_cmd = String::from(cmd.file_name().unwrap().to_str().unwrap());
+        let mut vec_copy_args = Vec::new();
+        args.into_iter().for_each(|s| {
+            debug_print_cmd.push_str(format!(" {}", s.as_ref().to_str().unwrap()).as_str());
+            vec_copy_args.push(s);
+        });
+
         let output = Command::new(cmd)
             .current_dir(invoke_dir)
-            .args(args)
+            .args(vec_copy_args)
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .output()?;
         if output.status.success() {
             Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
         } else {
-            println!("{}", String::from_utf8_lossy(&output.stderr));
-            let exit_code = output.status.code().map_or(String::from("?"), |c| c.to_string());
-            let error_msg = format!("exit code {} invoking {} process",
-                                    exit_code, cmd.to_str().unwrap());
+            let exit_code = output.status.code()
+                .map_or(String::from("?"), |c| c.to_string());
+            println!("\n{}\nexit code {}\ncommand output:\n\n{}",
+                     debug_print_cmd,
+                     exit_code,
+                     String::from_utf8_lossy(&output.stderr),
+            );
+
+            let error_msg = format!("exit code {} invoking {}", exit_code, debug_print_cmd);
             task::Error::result(error_msg.as_str())
         }
     }

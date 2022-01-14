@@ -1,3 +1,4 @@
+use std::{error, process};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
@@ -27,6 +28,11 @@ impl DataDir {
     pub fn sub_dir_path(path: &str) -> PathBuf {
         Self::path().join(path)
     }
+}
+
+pub fn error_exit(e: &dyn error::Error) -> ! {
+    println!("{}", e.to_string());
+    process::exit(1);
 }
 
 pub fn split_string(split: &str, string: String) -> Vec<String> {

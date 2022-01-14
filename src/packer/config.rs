@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::api::{context::SwoonContext, DEFAULT_OS, task, util::write_file};
 use crate::api::template::{Template, template_object};
-use crate::gcloud;
+use crate::platforms::gcloud;
 
 pub fn write_gcp_archetype_config(ctx: &SwoonContext, dest_dir: PathBuf) -> task::Result<()> {
     let image_name = "archetype";
@@ -28,7 +28,11 @@ fn render_gcp_source(ctx: &SwoonContext, image_name: &str) -> task::Result<Strin
         Some(cfg) => &cfg.org_name,
         None => return task::Error::result("no config"),
     };
-    let gcp_proj_id = gcloud::cli::default_project_id(ctx)?;
+    let default_project_id = match &ctx.platforms.gcloud {
+        Some(gcloud) => &gcloud.default_project_id,
+        None => return task::Error::result("no gcloud ctx"),
+    };
+    let gcp_proj_id = default_project_id;
     let source_image = gcloud::cli::image_name_by_os(ctx, DEFAULT_OS)?;
     let template = Template::new(include_bytes!("source.gcp.pkr.hcl.liquid"))?;
     Ok(template.render(&template_object!({

@@ -13,7 +13,7 @@ pub struct InitOpts<'a> {
 }
 
 pub fn init_swoon_project(ctx: &SwoonContext, opts: &InitOpts) -> command::Result {
-    if let Some(_) = ctx.config_path {
+    if let Some(_) = ctx.config {
         return command::Error::with_command_suggestions(
             "A swoon.yml file already exists in your current directory",
             vec!(Bake),

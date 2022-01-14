@@ -1,5 +1,6 @@
 use crate::api::CloudPlatform::*;
 
+pub mod binaries;
 pub mod command;
 pub mod config;
 pub mod context;
@@ -10,7 +11,7 @@ pub mod util;
 
 pub const DEFAULT_OS: OperatingSystem = OperatingSystem::Debian { version: 11 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum CloudPlatform {
     AWS,
     Azure,
@@ -45,7 +46,7 @@ impl CloudPlatform {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum OperatingSystem {
     Debian { version: i32 },
     Ubuntu { version: f32, minimal: bool },
