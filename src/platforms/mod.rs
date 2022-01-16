@@ -33,7 +33,6 @@ impl PlatformContexts {
             Err(e) => {
                 // todo why can't i use error_exit here (futures lose Error trait compat?)
                 println!("{}", e.to_string());
-                dbg!(e);
                 process::exit(1);
             }
         };

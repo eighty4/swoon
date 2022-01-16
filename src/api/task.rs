@@ -11,12 +11,12 @@ pub struct Error {
 }
 
 impl Error {
-    pub fn new(msg: &str) -> Self {
-        Error { msg: String::from(msg) }
+    pub fn new<S: AsRef<str>>(msg: S) -> Self {
+        Self { msg: String::from(msg.as_ref()) }
     }
 
-    pub fn result<T>(msg: &str) -> Result<T> {
-        Result::Err(Error::new(msg))
+    pub fn result<T, S: AsRef<str>>(msg: S) -> Result<T> {
+        Result::Err(Self::new(msg.as_ref()))
     }
 }
 
@@ -29,6 +29,6 @@ impl fmt::Display for Error {
 
 impl From<std::io::Error> for Error {
     fn from(f: std::io::Error) -> Self {
-        Error { msg: f.to_string() }
+        Self::new(f.to_string())
     }
 }

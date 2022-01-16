@@ -20,7 +20,7 @@ impl Template {
     pub fn render(&self, globals: &dyn liquid::ObjectView) -> task::Result<String> {
         match self.tmpl.render(globals) {
             Ok(r) => Ok(r),
-            Err(e) => task::Error::result(e.to_string().as_ref()),
+            Err(e) => task::Error::result(e.to_string()),
         }
     }
 }

@@ -35,7 +35,7 @@ impl SwoonConfig {
     fn parse(config: &str) -> task::Result<SwoonConfig> {
         let yaml_read = YamlLoader::load_from_str(config);
         if let Err(e) = yaml_read {
-            return task::Error::result(e.to_string().as_ref());
+            return task::Error::result(e.to_string());
         }
         let yaml_docs = yaml_read.unwrap();
         let doc = &yaml_docs[0];

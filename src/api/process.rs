@@ -44,7 +44,7 @@ impl Process {
             );
 
             let error_msg = format!("exit code {} invoking {}", exit_code, debug_print_cmd);
-            task::Error::result(error_msg.as_str())
+            task::Error::result(error_msg)
         }
     }
 }
