@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use clap::{App, Arg, ArgMatches, SubCommand};
+use clap;
 
 use crate::api::command;
 use crate::api::context::SwoonContext;
@@ -16,35 +16,64 @@ mod packer;
 mod platforms;
 
 fn main() {
-    let a: ArgMatches = App::new("Swoon CLI")
+    let a: clap::ArgMatches = clap::Command::new("Swoon CLI")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Adam McKee <adam.be.g84d@gmail.com>")
         .about("The cloud for you, not for the enterprise.")
-        .subcommand(SubCommand::with_name("init")
+
+        .arg(clap::Arg::new("debug")
+            .short('d')
+            .long("debug")
+            .help("Print extra debugging info")
+            .takes_value(false))
+
+        .subcommand(clap::Command::new("init")
             .about("init your cloud config")
-            .arg(Arg::with_name("template")
-                .short("t")
+
+            .arg(clap::Arg::new("non-interactive")
+                .long("non-interactive")
+                .help("Init project without user input")
+                .takes_value(false))
+
+            .arg(clap::Arg::new("org-name")
+                .long("org-name")
+                .value_name("ORGANIZATION")
+                .help("Specify swoon.yml template")
+                .takes_value(true))
+
+            .arg(clap::Arg::new("template")
+                .short('t')
                 .long("template")
                 .value_name("TEMPLATE")
                 .help("Specify swoon.yml template")
                 .takes_value(true))
+
+            .arg(clap::Arg::new("cloud-platform")
+                .long("cloud-platform")
+                .value_name("PLATFORM")
+                .help("Cloud platform")
+                .possible_values(&["gcp"])
+                .takes_value(true))
+
+            .arg(clap::Arg::new("operating-system")
+                .long("operating-system")
+                .value_name("OS")
+                .help("Default operating system for pre-baked machine images and servers")
+                .takes_value(true))
         )
-        .subcommand(SubCommand::with_name("bake")
+        .subcommand(clap::Command::new("bake")
             .about("bake your machine images")
-            .arg(Arg::with_name("approve-plan")
-                .short("a")
+
+            .arg(clap::Arg::new("approve-plan")
+                .short('a')
                 .long("approve-plan")
                 .help("Approve machine image plan")
                 .takes_value(false))
         )
-        .arg(Arg::with_name("debug")
-            .short("d")
-            .long("debug")
-            .help("Print extra debugging info")
-            .takes_value(false))
         .get_matches();
 
-    let c: SwoonContext = SwoonContext::init_from_args(&a).expect("failed to initialize");
+    let c: SwoonContext = SwoonContext::init_from_args(&a)
+        .expect("failed to initialize");
 
     let r: command::Result = exec_cmd(&c, &a);
     if let Some(err) = r.err() {
@@ -61,14 +90,19 @@ fn main() {
     }
 }
 
-fn exec_cmd(ctx: &SwoonContext, args: &ArgMatches) -> command::Result {
+fn exec_cmd(ctx: &SwoonContext, args: &clap::ArgMatches) -> command::Result {
     match args.subcommand() {
-        ("init", Some(init_match)) => init_swoon_project(&ctx, &InitOpts {
-            template_name: init_match.value_of("template"),
-        }),
-        ("bake", Some(bake_match)) => bake_machine_images(&ctx, &BakeOpts {
-            approve_plan: bake_match.is_present("approve-plan"),
-        }),
-        _ => command::SUCCESS,
+        None => command::SUCCESS,
+        Some((subcommand_name, subcommand_args)) => {
+            match subcommand_name {
+                "init" => init_swoon_project(&ctx, &InitOpts {
+                    template_name: subcommand_args.value_of("template"),
+                }),
+                "bake" => bake_machine_images(&ctx, &BakeOpts {
+                    approve_plan: subcommand_args.is_present("approve-plan"),
+                }),
+                &_ => command::SUCCESS,
+            }
+        }
     }
 }

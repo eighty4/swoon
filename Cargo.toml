@@ -1,6 +1,6 @@
 [package]
 name = "swoon"
-version = "0.1.5"
+version = "0.1.6"
 authors = [
     "Adam McKee <adam.be.g84d@gmail.com>",
 ]
@@ -12,10 +12,10 @@ license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]
-clap = "2.34.0"
+clap = "3.1.15"
 console = "0.15.0"
-dialoguer = "0.9.0"
-futures = "0.3.19"
-liquid = "0.23.1"
-which = "4.2.2"
+dialoguer = "0.10.0"
+futures = "0.3.21"
+liquid = "0.26.0"
+which = "4.2.5"
 yaml-rust = "0.4.5"
