@@ -1,7 +1,4 @@
-use std::{error, process};
-use std::fs;
-use std::io::Write;
-use std::path::PathBuf;
+use std::{env, fs, path::PathBuf};
 
 use crate::api::task;
 
@@ -30,9 +27,12 @@ impl DataDir {
     }
 }
 
-pub fn error_exit(e: &dyn error::Error) -> ! {
-    println!("{}", e.to_string());
-    process::exit(1);
+pub struct ProjectDir {}
+
+impl ProjectDir {
+    pub fn path() -> PathBuf {
+        env::current_dir().expect("cwd for project dir error")
+    }
 }
 
 pub fn split_string(split: &str, string: String) -> Vec<String> {
@@ -41,12 +41,6 @@ pub fn split_string(split: &str, string: String) -> Vec<String> {
     } else {
         string.split(split).map(|s| s.to_string()).collect()
     }
-}
-
-pub fn write_file(path: &PathBuf, content: String) -> task::Result<()> {
-    let mut file = fs::File::create(path)?;
-    file.write_all(content.as_bytes())?;
-    task::SUCCESS
 }
 
 #[cfg(test)]

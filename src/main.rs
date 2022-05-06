@@ -96,7 +96,11 @@ fn exec_cmd(ctx: &SwoonContext, args: &clap::ArgMatches) -> command::Result {
         Some((subcommand_name, subcommand_args)) => {
             match subcommand_name {
                 "init" => init_swoon_project(&ctx, &InitOpts {
+                    non_interactive: subcommand_args.is_present("non-interactive"),
                     template_name: subcommand_args.value_of("template"),
+                    org_name: subcommand_args.value_of("org-name"),
+                    default_platform: subcommand_args.value_of("cloud-platform"),
+                    default_os: subcommand_args.value_of("operating-system"),
                 }),
                 "bake" => bake_machine_images(&ctx, &BakeOpts {
                     approve_plan: subcommand_args.is_present("approve-plan"),

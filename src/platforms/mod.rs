@@ -1,5 +1,3 @@
-use std::process;
-
 use futures::executor;
 
 use gcloud::GcloudContext;
@@ -8,6 +6,7 @@ use crate::api::binaries::{BinaryPaths, PathLookup};
 use crate::api::config::SwoonConfig;
 
 pub mod gcloud;
+pub mod packer;
 
 #[derive(Clone)]
 pub struct PlatformContexts {
@@ -30,14 +29,14 @@ impl PlatformContexts {
             binary_paths.gcloud_path(), &config));
         let gcloud = match gcloud_ctx_result {
             Ok(gcloud) => Some(gcloud),
-            Err(e) => {
-                // todo why can't i use error_exit here (futures lose Error trait compat?)
-                println!("{}", e.to_string());
-                process::exit(1);
-            }
+            Err(e) => e.exit(),
         };
         Self {
             gcloud,
         }
+    }
+
+    pub fn gcloud_ctx(&self) -> &GcloudContext {
+        self.gcloud.as_ref().expect("no gcloud ctx")
     }
 }

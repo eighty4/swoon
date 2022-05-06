@@ -1,17 +1,18 @@
 use dialoguer::Input;
 
-use crate::api::command;
+use crate::api::{command, task};
 use crate::api::command::Name::Init;
 use crate::api::context::SwoonContext;
-use crate::api::util::{DataDir, error_exit};
+use crate::api::util::DataDir;
 use crate::images::BakingPlan;
+use crate::packer::PackerBuild;
 
 pub struct BakeOpts {
     pub approve_plan: bool,
 }
 
 pub fn bake_machine_images(ctx: &SwoonContext, opts: &BakeOpts) -> command::Result {
-    if let None = ctx.config {
+    if !ctx.has_config() {
         return command::Error::with_command_suggestions(
             "There's no swoon.yml file in your current directory",
             vec!(Init),
@@ -28,6 +29,8 @@ pub fn bake_machine_images(ctx: &SwoonContext, opts: &BakeOpts) -> command::Resu
         }
     }
 
+    PackerBuild::default_archetype(ctx).bake()?;
+
     command::SUCCESS
 }
 
@@ -42,6 +45,6 @@ fn prompt_for_approval(ctx: &SwoonContext, baking_plan: &BakingPlan) -> bool {
         .interact_text();
     match result {
         Ok(approval) => approval == "yes",
-        Err(e) => error_exit(&e),
+        Err(e) => task::Error::from(e).exit(),
     }
 }

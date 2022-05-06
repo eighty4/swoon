@@ -1,8 +1,0 @@
-source "googlecompute" "{{ image_name }}" {
-    project_id   = "{{ gcp_proj_id }}"
-    image_name   = "{{ image_name }}"
-    source_image = "{{ source_image }}"
-    ssh_username = "packer"
-    zone         = "us-central1-a"
-    machine_type = "e2-medium"
-}

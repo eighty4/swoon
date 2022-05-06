@@ -1,6 +1,6 @@
 [package]
 name = "swoon"
-version = "0.1.6"
+version = "0.1.7"
 authors = [
     "Adam McKee <adam.be.g84d@gmail.com>",
 ]
@@ -19,3 +19,7 @@ futures = "0.3.21"
 liquid = "0.26.0"
 which = "4.2.5"
 yaml-rust = "0.4.5"
+
+[dev-dependencies]
+assert_cmd = "2.0.4"
+tempdir = "0.3.7"

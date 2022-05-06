@@ -1,9 +1,9 @@
-use std::env;
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use crate::api::task;
+use crate::api::util::ProjectDir;
 
 pub struct Process {}
 
@@ -12,7 +12,7 @@ impl Process {
         where
             I: IntoIterator<Item=S>,
             S: AsRef<OsStr>, {
-        Self::invoke_from_dir(env::current_dir()?, cmd, args)
+        Self::invoke_from_dir(ProjectDir::path(), cmd, args)
     }
 
     pub fn invoke_from_dir<I, S>(invoke_dir: PathBuf, cmd: &PathBuf, args: I) -> task::Result<String>

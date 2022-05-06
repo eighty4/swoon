@@ -3,11 +3,11 @@ use std::path::PathBuf;
 use crate::api::{OperatingSystem, task};
 use crate::api::process::Process;
 use crate::api::util::split_string;
+use crate::platforms::gcloud::images;
 
-// todo check if cli is up to date
+// todo[gcloud] check if cli is up to date
 //  gcloud version
-
-// todo check if user is authed
+// todo[gcloud] check if user is authed
 
 const ERR_DEFAULT_PROJECT: &str = r"gcloud does not have a configured default project
 
@@ -54,7 +54,7 @@ impl GcloudCli {
             "images",
             "list",
             "--format=value(name)",
-            format!("--filter=family:{}", image_family_name_by_os(os)).as_ref(),
+            format!("--filter=family:{}", images::family_name_by_os(os)).as_ref(),
             "-q",
         ])
     }
@@ -76,17 +76,6 @@ impl GcloudCli {
 //     ])?;
 //     Ok(split_string("\n", output))
 // }
-
-fn image_family_name_by_os(os: &OperatingSystem) -> String {
-    match os {
-        OperatingSystem::Debian { version } => format!("debian-{}", version),
-        OperatingSystem::Ubuntu { version, minimal } => if *minimal {
-            format!("ubuntu-minimal-{}{}-lts", version.major, version.minor)
-        } else {
-            format!("ubuntu-{}{}-lts", version.major, version.minor)
-        },
-    }
-}
 
 // #[cfg(test)]
 // mod tests {

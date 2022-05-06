@@ -1,0 +1,68 @@
+---
+
+- name: Install firewall packages
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - iptables
+    - iptables-persistent
+    - netfilter-persistent
+
+- name: Allow all loopback traffic
+  iptables:
+    action: append
+    chain: INPUT
+    jump: ACCEPT
+    in_interface: lo
+
+- name: Allow established connections
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    ctstate: ESTABLISHED,RELATED
+
+- name: Allow ping traffic
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: icmp
+
+- name: Allow SSH traffic
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: tcp
+    destination_port: "{{ ssh_port }}"
+  when: ssh_port is defined
+
+- name: Allow service traffic
+  iptables:
+    chain: INPUT
+    jump: ACCEPT
+    protocol: tcp
+    destination_port: "{{ item }}"
+  when: service_ports is defined
+  with_items: "{{ service_ports }}"
+
+- name: Map service traffic
+  iptables:
+    table: nat
+    chain: PREROUTING
+    jump: REDIRECT
+    protocol: tcp
+    destination_port: "{{ from_port }}"
+    to_ports: "{{ to_port }}"
+  when: service_mappings is defined
+  vars:
+    from_port: 80
+    to_port: 8111
+  with_items: "{{ service_mappings }}"
+
+- name: Drop traffic without rule
+  iptables:
+    chain: INPUT
+    jump: DROP
+
+- name: Save firewall rules
+  command: /usr/sbin/netfilter-persistent save

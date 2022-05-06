@@ -26,7 +26,7 @@ pub struct BakingPlan {
 
 impl BakingPlan {
     pub fn from(ctx: &SwoonContext) -> task::Result<Self> {
-        let cfg = ctx.config.as_ref().expect("no config");
+        let cfg = ctx.config();
         Ok(BakingPlan {
             default_archetype: ImageSpec {
                 source: ImageSource::OperatingSystem { os: cfg.default_os.clone() },

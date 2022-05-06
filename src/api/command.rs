@@ -2,6 +2,7 @@ use std::{fmt, result};
 
 use crate::api::task;
 
+#[derive(Clone)]
 pub enum Name {
     Bake,
     Init,

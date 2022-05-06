@@ -1,9 +1,13 @@
-use std::fmt;
+use std::{fmt, process};
 use std::result;
 
 pub type Result<T> = result::Result<T, Error>;
 
-pub const SUCCESS: Result<()> = Result::Ok(());
+pub const SUCCESS: Result<()> = Ok(());
+
+pub fn fatal<S: AsRef<str>>(msg: S) -> ! {
+    Error::new(msg).exit()
+}
 
 #[derive(Debug, PartialEq)]
 pub struct Error {
@@ -17,6 +21,11 @@ impl Error {
 
     pub fn result<T, S: AsRef<str>>(msg: S) -> Result<T> {
         Result::Err(Self::new(msg.as_ref()))
+    }
+
+    pub fn exit(&self) -> ! {
+        println!("{}", self.to_string());
+        process::exit(1);
     }
 }
 

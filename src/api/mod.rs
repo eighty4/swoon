@@ -6,9 +6,9 @@ pub mod binaries;
 pub mod command;
 pub mod config;
 pub mod context;
+pub mod output;
 pub mod process;
 pub mod task;
-pub mod template;
 pub mod util;
 
 pub const DEBIAN_11: OperatingSystem = OperatingSystem::Debian { version: 11 };
@@ -45,15 +45,15 @@ pub enum CloudPlatform {
 }
 
 impl CloudPlatform {
-    pub fn from_str(label: &str) -> Option<Self> {
+    pub fn from_str(label: &str) -> Self {
         match label {
-            "aws" => Some(AWS),
-            "azure" => Some(Azure),
-            "digitalocean" => Some(DigitalOcean),
-            "gcp" => Some(GCP),
-            "linode" => Some(Linode),
-            "vultr" => Some(Vultr),
-            _ => None,
+            "aws" => AWS,
+            "azure" => Azure,
+            "digitalocean" => DigitalOcean,
+            "gcp" => GCP,
+            "linode" => Linode,
+            "vultr" => Vultr,
+            _ => task::fatal(format!("cloud platform {} invalid", label)),
         }
     }
 
@@ -82,7 +82,7 @@ pub enum OperatingSystem {
 }
 
 impl OperatingSystem {
-    pub fn from_string(s: &str) -> task::Result<OperatingSystem> {
+    pub fn from_string(s: &str) -> task::Result<Self> {
         match s {
             "debian" | "debian:11" | "debian:bullseye" => Ok(DEBIAN_11),
             "debian:10" | "debian:buster" => Ok(DEBIAN_10),
@@ -100,9 +100,9 @@ impl OperatingSystem {
             OperatingSystem::Debian { version } => format!("debian:{}", version),
             OperatingSystem::Ubuntu { version, minimal } => {
                 if *minimal {
-                    format!("ubuntu:{}.{:02}:minimal", version.major, version.minor)
+                    format!("ubuntu:{:02}.{:02}:minimal", version.major, version.minor)
                 } else {
-                    format!("ubuntu:{}.{:02}", version.major, version.minor)
+                    format!("ubuntu:{:02}.{:02}", version.major, version.minor)
                 }
             }
         }

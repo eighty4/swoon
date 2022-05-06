@@ -1,13 +1,14 @@
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use yaml_rust::YamlLoader;
 
 use crate::api::{CloudPlatform, DEFAULT_OS, OperatingSystem, task};
-use crate::api::template::{Template, template_object};
-use crate::api::util::error_exit;
+use crate::api::output::file::{Directory, File};
+use crate::api::output::template::{Template, template_object, TemplateFile};
+use crate::api::util::ProjectDir;
 
+#[derive(Clone)]
 pub struct SwoonConfig {
     pub org_name: String,
     pub default_os: OperatingSystem,
@@ -16,10 +17,7 @@ pub struct SwoonConfig {
 
 impl SwoonConfig {
     pub fn config_file_path() -> PathBuf {
-        match std::env::current_dir() {
-            Ok(cwd) => cwd.join("swoon.yml"),
-            Err(e) => error_exit(&e),
-        }
+        ProjectDir::path().join("swoon.yml")
     }
 
     pub fn read_from_current_dir() -> task::Result<Option<SwoonConfig>> {
@@ -58,19 +56,36 @@ impl SwoonConfig {
         Self::parse(config_read.as_ref())
     }
 
-    pub(crate) fn write(&self, tmpl_name: Option<&str>) -> task::Result<()> {
-        let tmpl = Template::new(include_bytes!("swoon.yml.liquid"))?;
-        let cfg_content: String = tmpl.render(&template_object!({
-            "org_name": self.org_name,
-            "default_os": self.default_os.to_string(),
-            "default_platform": self.default_platform.to_str(),
-        }))?;
-        println!("Writing a {} swoon config for {}",
-                 tmpl_name.unwrap_or("default"),
-                 self.org_name);
-        let mut file = fs::File::create("swoon.yml")?;
-        file.write_all(cfg_content.as_bytes())?;
-        task::SUCCESS
+    pub fn write(&self, tmpl_name_opt: Option<&str>) -> task::Result<()> {
+        let tmpl_name = tmpl_name_opt.unwrap_or("default").to_string();
+        println!("Writing a {} swoon config for {}", tmpl_name, self.org_name);
+        SwoonConfigFile {
+            cfg: self.clone(),
+            tmpl_name,
+        }.write()
+    }
+}
+
+pub struct SwoonConfigFile {
+    cfg: SwoonConfig,
+    tmpl_name: String,
+}
+
+impl TemplateFile for SwoonConfigFile {
+    fn data(&self) -> task::Result<liquid::Object> {
+        Ok(template_object!({
+            "org_name": self.cfg.org_name,
+            "default_os": self.cfg.default_os.to_string(),
+            "default_platform": self.cfg.default_platform.to_str(),
+        }))
+    }
+
+    fn template(&self) -> task::Result<Template> {
+        Template::new(include_bytes!("swoon.yml.liquid"))
+    }
+
+    fn template_output_path(&self) -> (Directory, String) {
+        (Directory::ProjectRoot, "swoon.yml".to_string())
     }
 }
 
